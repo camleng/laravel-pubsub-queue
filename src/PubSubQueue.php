@@ -55,12 +55,20 @@ class PubSubQueue extends Queue implements QueueContract
     protected $queuePrefix = '';
 
     /**
+     * When popping a message off the queue, do not immediately acknowledge the message; rather, only acknowledge the message after the job has finished successfully.
+     * If a job has not succeeded, do not release the job back to the queue, but, instead, rely on PubSub to retry the message.
+     *
+     * @var bool
+     */
+    protected $usePubsubRetries;
+
+    /**
      * Create a new GCP PubSub instance.
      *
      * @param  \Google\Cloud\PubSub\PubSubClient  $pubsub
      * @param  string  $default
      */
-    public function __construct(PubSubClient $pubsub, $default, $subscriber = 'subscriber', $topicAutoCreation = true, $subscriptionAutoCreation = true, $queuePrefix = '')
+    public function __construct(PubSubClient $pubsub, $default, $subscriber = 'subscriber', $topicAutoCreation = true, $subscriptionAutoCreation = true, $queuePrefix = '', $usePubsubRetries = false)
     {
         $this->pubsub = $pubsub;
         $this->default = $default;
@@ -68,6 +76,7 @@ class PubSubQueue extends Queue implements QueueContract
         $this->topicAutoCreation = $topicAutoCreation;
         $this->subscriptionAutoCreation = $subscriptionAutoCreation;
         $this->queuePrefix = $queuePrefix;
+        $this->usePubsubRetries = $usePubsubRetries;
     }
 
     /**
@@ -184,7 +193,8 @@ class PubSubQueue extends Queue implements QueueContract
             $this,
             $messages[0],
             $this->connectionName,
-            $this->getQueue($queue)
+            $this->getQueue($queue),
+            $this->usePubsubRetries
         );
     }
 
@@ -233,7 +243,20 @@ class PubSubQueue extends Queue implements QueueContract
      */
     public function republish(Message $message, $queue = null, $options = [], $delay = 0)
     {
-        return;
+        if ($this->usePubsubRetries) {
+            return;
+        }
+
+        $topic = $this->getTopic($this->getQueue($queue));
+
+        $options = array_merge([
+            'available_at' => (string) $this->availableAt($delay),
+        ], $this->validateMessageAttributes($options));
+
+        return $topic->publish([
+            'data' => $message->data(),
+            'attributes' => $options,
+        ]);
     }
 
     /**

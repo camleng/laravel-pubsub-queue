@@ -6,7 +6,6 @@ use Google\Cloud\PubSub\Message;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\Job as JobContract;
 use Illuminate\Queue\Jobs\Job;
-use Illuminate\Support\Facades\Log;
 use Kainxspirits\PubSubQueue\PubSubQueue;
 
 class PubSubJob extends Job implements JobContract
@@ -33,6 +32,14 @@ class PubSubJob extends Job implements JobContract
     protected $decoded;
 
     /**
+     * When popping a message off the queue, do not immediately acknowledge the message; rather, only acknowledge the message after the job has finished successfully.
+     * If a job has not succeeded, do not release the job back to the queue, but, instead, rely on PubSub to retry the message.
+     *
+     * @var bool
+     */
+    protected $usePubsubRetries;
+
+    /**
      * Create a new job instance.
      *
      * @param  \Illuminate\Container\Container  $container
@@ -41,13 +48,14 @@ class PubSubJob extends Job implements JobContract
      * @param  string  $connectionName
      * @param  string  $queue
      */
-    public function __construct(Container $container, PubSubQueue $pubsub, Message $job, $connectionName, $queue)
+    public function __construct(Container $container, PubSubQueue $pubsub, Message $job, $connectionName, $queue, $usePubsubRetries = false)
     {
         $this->pubsub = $pubsub;
         $this->job = $job;
         $this->queue = $queue;
         $this->container = $container;
         $this->connectionName = $connectionName;
+        $this->usePubsubRetries = $usePubsubRetries;
 
         $this->decoded = $this->payload();
     }
@@ -90,7 +98,18 @@ class PubSubJob extends Job implements JobContract
      */
     public function release($delay = 0)
     {
-        Log::info('Not actually releasing it back to the queue!');
-        return;
+        if ($this->usePubsubRetries) {
+            return;
+        }
+
+        parent::release($delay);
+
+        $attempts = $this->attempts();
+        $this->pubsub->republish(
+            $this->job,
+            $this->queue,
+            ['attempts' => (string) $attempts],
+            $delay
+        );
     }
 }
