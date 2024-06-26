@@ -36,12 +36,35 @@ You can check [Google Cloud PubSub client](http://googleapis.github.io/google-cl
     'subscriber' => 'subscriber-name',
     'create_topics' => true,
     'create_subscriptions' => true,
+    'use_pubsub_retries' => false
 ],
 ```
 
 ## Avoiding Administrator Operations Limits
 
 To avoid limit issues, change the `create_topics` and `create_subscriptions` flags to false.
+
+## Use PubSub Retries
+
+To sidestep Laravel's ordering and retrying logic and rely on PubSub's implementations, make sure to set `use_pubsub_retries => true`. This does the following:
+- When popping a message off the queue, do not immediately acknowledge the message; rather, only acknowledge the message after the job has finished successfully.
+- If a job has not succeeded, do not release the job back to the queue, but, instead, rely on PubSub to retry the message.
+
+Also, ensure that your jobs implement the `HasOrderingKey` trait and set the ordering key:
+
+```php
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Kainxspirits\PubSubQueue\Traits\HasOrderingKey;
+
+class MyJob implements ShouldQueue
+{
+    use HasOrderingKey;
+
+    public __construct() {
+        $this->setOrderingKey('my-ordering-key');
+    }
+}
+```
 
 ## Testing
 
