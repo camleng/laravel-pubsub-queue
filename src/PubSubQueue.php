@@ -179,8 +179,6 @@ class PubSubQueue extends Queue implements QueueContract
             return;
         }
 
-        $this->acknowledge($messages[0], $queue);
-
         return new PubSubJob(
             $this->container,
             $this,
@@ -235,16 +233,7 @@ class PubSubQueue extends Queue implements QueueContract
      */
     public function republish(Message $message, $queue = null, $options = [], $delay = 0)
     {
-        $topic = $this->getTopic($this->getQueue($queue));
-
-        $options = array_merge([
-            'available_at' => (string) $this->availableAt($delay),
-        ], $this->validateMessageAttributes($options));
-
-        return $topic->publish([
-            'data' => $message->data(),
-            'attributes' => $options,
-        ]);
+        return;
     }
 
     /**

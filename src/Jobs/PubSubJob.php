@@ -6,6 +6,7 @@ use Google\Cloud\PubSub\Message;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Queue\Job as JobContract;
 use Illuminate\Queue\Jobs\Job;
+use Illuminate\Support\Facades\Log;
 use Kainxspirits\PubSubQueue\PubSubQueue;
 
 class PubSubJob extends Job implements JobContract
@@ -89,14 +90,7 @@ class PubSubJob extends Job implements JobContract
      */
     public function release($delay = 0)
     {
-        parent::release($delay);
-
-        $attempts = $this->attempts();
-        $this->pubsub->republish(
-            $this->job,
-            $this->queue,
-            ['attempts' => (string) $attempts],
-            $delay
-        );
+        Log::info('Not actually releasing it back to the queue!');
+        return;
     }
 }
