@@ -188,6 +188,10 @@ class PubSubQueue extends Queue implements QueueContract
             return;
         }
 
+        if (!$this->usePubsubRetries) {
+            $this->acknowledge($messages[0], $queue);
+        }
+
         return new PubSubJob(
             $this->container,
             $this,
