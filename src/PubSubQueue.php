@@ -7,6 +7,7 @@ use Google\Cloud\PubSub\PubSubClient;
 use Google\Cloud\PubSub\Topic;
 use Illuminate\Contracts\Queue\Queue as QueueContract;
 use Illuminate\Queue\Queue;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Kainxspirits\PubSubQueue\Jobs\PubSubJob;
 
@@ -189,6 +190,7 @@ class PubSubQueue extends Queue implements QueueContract
         }
 
         if (!$this->usePubsubRetries) {
+            Log::info("Acknowledging message: " . $messages[0]->id() . ' on queue ' . $queue);
             $this->acknowledge($messages[0], $queue);
         }
 
