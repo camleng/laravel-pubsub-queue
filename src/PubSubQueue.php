@@ -190,7 +190,7 @@ class PubSubQueue extends Queue implements QueueContract
         }
 
         if (!$this->usePubsubRetries) {
-            Log::info("Acknowledging message: " . $messages[0]->id() . ' on queue ' . $queue);
+            Log::info("Acknowledging message " . $messages[0]->id() . ' on queue ' . $queue);
             $this->acknowledge($messages[0], $queue);
         }
 

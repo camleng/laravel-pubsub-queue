@@ -3,6 +3,7 @@
 namespace Kainxspirits\PubSubQueue;
 
 use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 use Kainxspirits\PubSubQueue\Connectors\PubSubConnector;
@@ -23,6 +24,7 @@ class PubSubQueueServiceProvider extends ServiceProvider
 
         Queue::after(function(JobProcessed $event) {
             [$pubsubQueue, $job, $queue] = $this->getProperties($event->job, ['pubsub', 'job', 'queue']);
+            Log::info("Acknowledging message " . $event->job->getJobId() . ' on queue ' . $queue);
             $pubsubQueue->acknowledge($job, $queue);
         });
     }
