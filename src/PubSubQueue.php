@@ -171,7 +171,7 @@ class PubSubQueue extends Queue implements QueueContract
         $topic = $this->getTopic($this->getQueue($queue));
 
         if ($this->topicAutoCreation && ! $topic->exists()) {
-            return;
+            return null;
         }
 
         $subscription = $topic->subscription($this->getSubscriberName());
@@ -181,16 +181,16 @@ class PubSubQueue extends Queue implements QueueContract
         ]);
 
         if (empty($messages) || count($messages) < 1) {
-            return;
+            return null;
         }
 
         $available_at = $messages[0]->attribute('available_at');
         if ($available_at && $available_at > time()) {
-            return;
+            return null;
         }
 
         if (!$this->usePubsubRetries) {
-            Log::info("Acknowledging message " . $messages[0]->id() . ' on queue ' . $queue);
+            Log::info("[PSQ] Acknowledging message " . $messages[0]->id() . ' on queue ' . $queue, ['deliveryAttempt' => $messages[0]->deliveryAttempt(), 'attributes' => $messages[0]->attributes()]);
             $this->acknowledge($messages[0], $queue);
         }
 

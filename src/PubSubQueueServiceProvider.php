@@ -24,7 +24,7 @@ class PubSubQueueServiceProvider extends ServiceProvider
 
         Queue::after(function(JobProcessed $event) {
             [$pubsubQueue, $job, $queue] = $this->getProperties($event->job, ['pubsub', 'job', 'queue']);
-            Log::info("Acknowledging message " . $event->job->getJobId() . ' on queue ' . $queue);
+            Log::info("[PSQSP] JobProcessed: " . $event->job->payload()['displayName'] . " - Acknowledging message " . $event->job->getJobId() . ' on queue ' . $queue, ['attempts' => $event->job->attempts(), 'hasFailed' => $event->job->hasFailed()]);
             $pubsubQueue->acknowledge($job, $queue);
         });
     }
