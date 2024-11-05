@@ -23,7 +23,7 @@ class PubSubQueueServiceProvider extends ServiceProvider
         });
 
         Queue::after(function (JobProcessed $event) {
-            [$pubsubQueue, $job, $queue] = $this->getProperties($event->job, ['pubsub', 'job', 'queue']);
+            [$pubsubQueue, $queue] = $this->getProperties($event->job, ['pubsub', 'job', 'queue']);
             if ($event->job->hasFailed()) {
                 Log::info("JobProcessed: " . $event->job->payload()['displayName'] . " - NOT acknowledging message because job failed. Retrying...", [
                     'job_id' => $event->job->getJobId(),
@@ -34,7 +34,7 @@ class PubSubQueueServiceProvider extends ServiceProvider
                     'job_id' => $event->job->getJobId(),
                     'queue' => $queue
                 ]);
-                $pubsubQueue->acknowledge($job, $queue);
+                $pubsubQueue->acknowledge($event->job, $queue);
             }
         });
     }
