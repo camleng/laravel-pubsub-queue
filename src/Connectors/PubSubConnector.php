@@ -33,6 +33,7 @@ class PubSubConnector implements ConnectorInterface
             $config['create_topics'] ?? true,
             $config['create_subscriptions'] ?? true,
             $config['queue_prefix'] ?? '',
+            $config['max_delivery_attempts'] ?? null,
             $config['use_pubsub_retries'] ?? false
         );
     }

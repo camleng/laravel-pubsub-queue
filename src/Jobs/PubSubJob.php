@@ -39,6 +39,8 @@ class PubSubJob extends Job implements JobContract
      */
     protected $usePubsubRetries;
 
+    protected $maxDeliveryAttempts;
+
     /**
      * Create a new job instance.
      *
@@ -48,13 +50,14 @@ class PubSubJob extends Job implements JobContract
      * @param  string  $connectionName
      * @param  string  $queue
      */
-    public function __construct(Container $container, PubSubQueue $pubsub, Message $job, $connectionName, $queue, $usePubsubRetries = false)
+    public function __construct(Container $container, PubSubQueue $pubsub, Message $job, $connectionName, $queue, $maxDeliveryAttempts, $usePubsubRetries = false)
     {
         $this->pubsub = $pubsub;
         $this->job = $job;
         $this->queue = $queue;
         $this->container = $container;
         $this->connectionName = $connectionName;
+        $this->maxDeliveryAttempts = $maxDeliveryAttempts;
         $this->usePubsubRetries = $usePubsubRetries;
 
         $this->decoded = $this->payload();
@@ -87,7 +90,15 @@ class PubSubJob extends Job implements JobContract
      */
     public function attempts()
     {
+        if ($this->usePubsubRetries) {
+            return $this->job->deliveryAttempt();
+        }
         return ((int) $this->job->attribute('attempts') ?? 0) + 1;
+    }
+
+    public function maxTries()
+    {
+        return $this->maxDeliveryAttempts ?? parent::maxTries();
     }
 
     /**

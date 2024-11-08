@@ -63,13 +63,15 @@ class PubSubQueue extends Queue implements QueueContract
      */
     protected $usePubsubRetries;
 
+    protected $maxDeliveryAttempts;
+
     /**
      * Create a new GCP PubSub instance.
      *
      * @param  \Google\Cloud\PubSub\PubSubClient  $pubsub
      * @param  string  $default
      */
-    public function __construct(PubSubClient $pubsub, $default, $subscriber = 'subscriber', $topicAutoCreation = true, $subscriptionAutoCreation = true, $queuePrefix = '', $usePubsubRetries = false)
+    public function __construct(PubSubClient $pubsub, $default, $subscriber = 'subscriber', $topicAutoCreation = true, $subscriptionAutoCreation = true, $queuePrefix = '', ?int $maxDeliveryAttempts = null, $usePubsubRetries = false)
     {
         $this->pubsub = $pubsub;
         $this->default = $default;
@@ -77,6 +79,7 @@ class PubSubQueue extends Queue implements QueueContract
         $this->topicAutoCreation = $topicAutoCreation;
         $this->subscriptionAutoCreation = $subscriptionAutoCreation;
         $this->queuePrefix = $queuePrefix;
+        $this->maxDeliveryAttempts = $maxDeliveryAttempts;
         $this->usePubsubRetries = $usePubsubRetries;
     }
 
@@ -200,6 +203,7 @@ class PubSubQueue extends Queue implements QueueContract
             $messages[0],
             $this->connectionName,
             $this->getQueue($queue),
+            $this->maxDeliveryAttempts,
             $this->usePubsubRetries
         );
     }
