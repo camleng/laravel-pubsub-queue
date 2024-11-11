@@ -42,6 +42,7 @@ class PubSubQueueServiceProvider extends ServiceProvider
         foreach ($props as $prop) {
             if (!$reflection->hasProperty($prop)) {
                 $properties[] = null;
+                continue;
             }
             $property = $reflection->getProperty($prop);
             $property->setAccessible('true');
