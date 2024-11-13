@@ -192,12 +192,7 @@ class PubSubQueue extends Queue implements QueueContract
             return null;
         }
 
-        if (!$this->usePubsubRetries) {
-            Log::info("Popping and acknowledging message " . $messages[0]->id(), ['job_id' => $messages[0]->id(), 'queue' => $queue, 'deliveryAttempt' => $messages[0]->deliveryAttempt(), 'attributes' => $messages[0]->attributes()]);
-            $this->acknowledge($messages[0], $queue);
-        }
-
-        return new PubSubJob(
+        $pubsubJob =  new PubSubJob(
             $this->container,
             $this,
             $messages[0],
@@ -206,6 +201,17 @@ class PubSubQueue extends Queue implements QueueContract
             $this->maxDeliveryAttempts,
             $this->usePubsubRetries
         );
+
+        if (!$this->usePubsubRetries) {
+            $job_id = $pubsubJob->getJobId();
+            Log::info("Popping and acknowledging message " . $job_id, [
+                'job_id' => $job_id,
+                'queue' => $queue
+            ]);
+            $this->acknowledge($messages[0], $queue);
+        }
+
+        return $pubsubJob;
     }
 
     /**
@@ -395,4 +401,5 @@ class PubSubQueue extends Queue implements QueueContract
     {
         return Str::random(32);
     }
+
 }
